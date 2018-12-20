@@ -1,17 +1,18 @@
 import React, { Component } from 'react';
 import io from 'socket.io-client';
-
+import Form from './components/form/form';
+import ChatBox from './components/chatbox/chatbox';
 import './App.css';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.socket = io('http://localhost:8000');
-    this.username = null;
 
     this.state = {
-      username: '',
-      isRegistered: false,
+      username: null,
+      usernameInput: '',
+      chatInput: '',
       chatPublic: []
     };
   }
@@ -19,15 +20,29 @@ class App extends Component {
   componentDidMount() {
     this.socket.on('new user connected', name => {
       console.log('user connected');
-      const chatPublic = this.state.chatPublic.slice();
-      chatPublic.push(`${name} has joined the room.`);
+      const chatPublic = [];
+      this.state.chatPublic.forEach(entry => {
+        chatPublic.push({ ...entry });
+      });
+
+      chatPublic.push({ username: name, message: 'has joined the room.' });
       console.log(name);
+      this.setState({ chatPublic: chatPublic });
+    });
+
+    this.socket.on('public chat entry', entry => {
+      const chatPublic = [];
+      this.state.chatPublic.forEach(entry => {
+        chatPublic.push({ ...entry });
+      });
+
+      chatPublic.push({ ...entry });
       this.setState({ chatPublic: chatPublic });
     });
 
     this.socket.on('user disconnected', name => {
       const chatPublic = this.state.chatPublic.slice();
-      chatPublic.push(`${name} has left the room.`);
+      chatPublic.push({ username: name, message: 'has left the room.' });
       console.log(name);
       this.setState({ chatPublic: chatPublic });
     });
@@ -40,12 +55,36 @@ class App extends Component {
 
   registerUsername = event => {
     event.preventDefault();
-    console.log(this.state.username);
-    if (!this.state.isRegistered) {
-      this.socket.emit('join public', this.state.username);
+    const username = this.state.usernameInput;
+
+    if (!this.state.username) {
+      this.socket.emit('join public', this.state.usernameInput);
     }
 
-    this.setState({ username: '', isRegistered: true });
+    this.setState({ username: username, usernameInput: '' });
+  };
+
+  submitPublicChat = event => {
+    event.preventDefault();
+    console.log(this.state);
+    if (this.state.username) {
+      const chat = {
+        username: this.state.username,
+        message: this.state.chatInput
+      };
+      const chatPublic = [];
+
+      this.state.chatPublic.forEach(entry => {
+        chatPublic.push({ ...entry });
+      });
+
+      chatPublic.push(chat);
+
+      this.socket.emit('public chat', chat);
+      this.setState({ chatPublic: chatPublic, chatInput: '' });
+    } else {
+      this.setState({ chatInput: '' });
+    }
   };
 
   render() {
@@ -53,24 +92,26 @@ class App extends Component {
       <div className="App">
         <div className="container">
           <div className="name-input">
-            <form onSubmit={this.registerUsername}>
-              <input
-                name="username"
-                type="text"
-                placeholder="Username"
-                value={this.state.username}
-                onChange={this.inputHandler}
-              />
-              <button type="submit">Submit</button>
-            </form>
+            <Form
+              name="usernameInput"
+              placeholder="Username"
+              inputValue={this.state.usernameInput}
+              inputHandler={this.inputHandler}
+              onSubmit={this.registerUsername}
+            />
           </div>
           <div className="chat-box">
-            {this.state.isRegistered ? (
+            {this.state.username ? (
               <h1>Welcome {this.state.username}</h1>
             ) : null}
-            {this.state.chatPublic.map((msg, index) => (
-              <p key={index}>{msg}</p>
-            ))}
+            <ChatBox
+              chat={this.state.chatPublic}
+              inputValue={this.state.chatInput}
+              inputHandler={this.inputHandler}
+              inputPlaceholder="Enter message"
+              inputName="chatInput"
+              formSubmit={this.submitPublicChat}
+            />
           </div>
         </div>
       </div>
