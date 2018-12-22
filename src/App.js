@@ -16,38 +16,48 @@ class App extends Component {
       username: null,
       usernameInput: '',
       chatInput: '',
-      chatPublic: []
+      users: [],
+      publicChat: []
     };
   }
 
   componentDidMount() {
     this.socket.on('new user connected', name => {
-      console.log('user connected');
-      const chatPublic = [];
-      this.state.chatPublic.forEach(entry => {
-        chatPublic.push({ ...entry });
+      const publicChat = [];
+      const users = this.state.users.slice();
+
+      users.push(name);
+
+      this.state.publicChat.forEach(entry => {
+        publicChat.push({ ...entry });
       });
 
-      chatPublic.push({ username: name, message: 'has joined the room.' });
-      console.log(name);
-      this.setState({ chatPublic: chatPublic });
+      publicChat.push({ username: name, message: 'has joined the room.' });
+
+      this.setState({ users: users, publicChat: publicChat });
+    });
+
+    this.socket.on('update online user list', users => {
+      console.log(users);
+      this.setState({ users: users });
     });
 
     this.socket.on('public chat entry', entry => {
-      const chatPublic = [];
-      this.state.chatPublic.forEach(entry => {
-        chatPublic.push({ ...entry });
+      const publicChat = [];
+      this.state.publicChat.forEach(entry => {
+        publicChat.push({ ...entry });
       });
 
-      chatPublic.push({ ...entry });
-      this.setState({ chatPublic: chatPublic });
+      publicChat.push({ ...entry });
+      this.setState({ publicChat: publicChat });
     });
 
     this.socket.on('user disconnected', name => {
-      const chatPublic = this.state.chatPublic.slice();
-      chatPublic.push({ username: name, message: 'has left the room.' });
-      console.log(name);
-      this.setState({ chatPublic: chatPublic });
+      const users = this.state.users.filter(user => user !== name);
+      const publicChat = this.state.publicChat.slice();
+      publicChat.push({ username: name, message: 'has left the room.' });
+
+      this.setState({ users: users, publicChat: publicChat });
     });
   }
 
@@ -75,16 +85,16 @@ class App extends Component {
         username: this.state.username,
         message: this.state.chatInput
       };
-      const chatPublic = [];
+      const publicChat = [];
 
-      this.state.chatPublic.forEach(entry => {
-        chatPublic.push({ ...entry });
+      this.state.publicChat.forEach(entry => {
+        publicChat.push({ ...entry });
       });
 
-      chatPublic.push(chat);
+      publicChat.push(chat);
 
       this.socket.emit('public chat', chat);
-      this.setState({ chatPublic: chatPublic, chatInput: '' });
+      this.setState({ publicChat: publicChat, chatInput: '' });
     } else {
       this.setState({ chatInput: '' });
     }
@@ -109,7 +119,9 @@ class App extends Component {
               <h1>Welcome {this.state.username}</h1>
             ) : null}
             <ChatBox
-              chat={this.state.chatPublic}
+              username={this.state.username}
+              chat={this.state.publicChat}
+              users={this.state.users}
               inputValue={this.state.chatInput}
               inputHandler={this.inputHandler}
               inputPlaceholder="Enter message"

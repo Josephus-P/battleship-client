@@ -42,7 +42,25 @@ class ChatBox extends Component {
 
   render() {
     const { classes, theme } = this.props;
-    console.log(classes);
+    console.log(this.props.username);
+    let users = this.props.username
+      ? this.props.users.filter(user => user !== this.props.username)
+      : null;
+    let onlineUsers = [];
+    if (users && users.length > 0) {
+      onlineUsers = users.map((user, index) => (
+        <Typography component="p" align="left" key={index}>
+          {user}
+        </Typography>
+      ));
+    } else {
+      onlineUsers = (
+        <Typography component="p" align="left">
+          <em>No online users</em>
+        </Typography>
+      );
+    }
+
     console.log(theme);
     return (
       <div className={classes.chatbox}>
@@ -63,7 +81,7 @@ class ChatBox extends Component {
           index={this.state.tabValue}
           onChangeIndex={this.handleChange}
         >
-          <TabContainer classes={classes.card} />
+          <TabContainer classes={classes.card}>{onlineUsers}</TabContainer>
           <TabContainer classes={classes.card}>
             {this.props.chat.map((entry, index) => (
               <Typography component="p" align="left" key={index}>
