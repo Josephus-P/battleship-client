@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
 import io from 'socket.io-client';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import Grid from '@material-ui/core/Grid';
 import Form from './components/form/form';
 import ChatBox from './components/chatbox/chatbox';
+import 'typeface-roboto';
 import './App.css';
 
 class App extends Component {
@@ -90,8 +93,9 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <div className="container">
-          <div className="name-input">
+        <CssBaseline />
+        <Grid container spacing={8}>
+          <div>
             <Form
               name="usernameInput"
               placeholder="Username"
@@ -100,7 +104,7 @@ class App extends Component {
               onSubmit={this.registerUsername}
             />
           </div>
-          <div className="chat-box">
+          <div>
             {this.state.username ? (
               <h1>Welcome {this.state.username}</h1>
             ) : null}
@@ -113,7 +117,7 @@ class App extends Component {
               formSubmit={this.submitPublicChat}
             />
           </div>
-        </div>
+        </Grid>
       </div>
     );
   }
