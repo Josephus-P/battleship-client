@@ -11,8 +11,8 @@ import Form from '../form/form';
 
 const TabContainer = ({ children, classes }) => {
   return (
-    <Card className={classes}>
-      <CardContent>{children}</CardContent>
+    <Card className={classes.card}>
+      <CardContent className={classes.cardContent}>{children}</CardContent>
     </Card>
   );
 };
@@ -24,6 +24,13 @@ const styles = theme => ({
   },
   card: {
     height: '20vh',
+    overflowY: 'auto'
+  },
+  cardContent: {
+    display: 'flex',
+    flexFlow: 'column',
+    justifyContent: 'flex-end',
+    height: '100%',
     overflowY: 'scroll'
   }
 });
@@ -32,21 +39,26 @@ class ChatBox extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tabValue: 0
+      value: 0
     };
   }
 
   handleChange = (event, value) => {
-    this.setState({ tabValue: value });
+    this.setState({ value });
+  };
+
+  handleChangeIndex = index => {
+    this.setState({ value: index });
   };
 
   render() {
     const { classes, theme } = this.props;
-    console.log(this.props.username);
+
     let users = this.props.username
       ? this.props.users.filter(user => user !== this.props.username)
       : null;
     let onlineUsers = [];
+
     if (users && users.length > 0) {
       onlineUsers = users.map((user, index) => (
         <Typography component="p" align="left" key={index}>
@@ -61,12 +73,11 @@ class ChatBox extends Component {
       );
     }
 
-    console.log(theme);
     return (
       <div className={classes.chatbox}>
         <AppBar position="static" color="default">
           <Tabs
-            value={this.state.tabValue}
+            value={this.state.value}
             indicatorColor="primary"
             textColor="primary"
             onChange={this.handleChange}
@@ -78,11 +89,12 @@ class ChatBox extends Component {
           </Tabs>
         </AppBar>
         <SwipeableViews
-          index={this.state.tabValue}
-          onChangeIndex={this.handleChange}
+          index={this.state.value}
+          onChangeIndex={this.handleChangeIndex}
+          axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
         >
-          <TabContainer classes={classes.card}>{onlineUsers}</TabContainer>
-          <TabContainer classes={classes.card}>
+          <TabContainer classes={classes}>{onlineUsers}</TabContainer>
+          <TabContainer classes={classes}>
             {this.props.chat.map((entry, index) => (
               <Typography component="p" align="left" key={index}>
                 <strong>
@@ -95,7 +107,7 @@ class ChatBox extends Component {
               </Typography>
             ))}
           </TabContainer>
-          <TabContainer classes={classes.card} />
+          <TabContainer classes={classes} />
         </SwipeableViews>
         <Form
           name={this.props.inputName}
